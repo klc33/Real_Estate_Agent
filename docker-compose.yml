@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   api:
     build:
@@ -5,12 +7,20 @@ services:
       dockerfile: Dockerfile
     container_name: realestate-api
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     env_file:
       - .env
+    environment:
+      - PYTHONPATH=/app
     volumes:
-      - .:/app
-    restart: always
+      - ./ml:/app/ml  # Mount model directory for persistence
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   ui:
     build:
@@ -18,11 +28,12 @@ services:
       dockerfile: streamlit_app/Dockerfile
     container_name: realestate-ui
     ports:
-      - "8501:8501"
+      - "${UI_PORT:-8501}:8501"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     environment:
       - API_URL=http://api:8000
     volumes:
-      - .:/app
-    restart: always
+      - ./streamlit_app:/app/streamlit_app
+    restart: unless-stopped
