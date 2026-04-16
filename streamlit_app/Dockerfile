@@ -17,10 +17,15 @@ COPY . .
 
 # Set environment variables
 ENV PYTHONPATH=/app
-ENV API_URL=http://api:8000
+ENV API_URL=http://localhost:8000
 
-# Expose Streamlit port
+# Create startup script that respects Railway's PORT
+RUN echo '#!/bin/bash\n\
+PORT=${PORT:-8501}\n\
+echo "Starting Streamlit on port $PORT"\n\
+exec streamlit run streamlit_app/app.py --server.port $PORT --server.address 0.0.0.0 --server.enableCORS=false --server.enableXsrfProtection=false' > /start.sh && \
+    chmod +x /start.sh
+
 EXPOSE 8501
 
-# Run Streamlit
-CMD ["streamlit", "run", "streamlit_app/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["/start.sh"]
