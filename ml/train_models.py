@@ -2,40 +2,36 @@ import numpy as np
 import joblib
 
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.ensemble import RandomForestRegressor, HistGradientBoostingRegressor
 
 from ml.preprocess import preprocessor
-from ml.train import X_train, X_val, y_train, y_val
+from ml.train import X_train, X_val, X_test, y_train, y_val, y_test
 
 
 # -------------------------
-# EVALUATION FUNCTION (FIXED)
+# EVALUATION FUNCTION
 # -------------------------
 
-def eval_pipeline(name, pipeline, X_tr, y_tr, X_ev, y_ev):
-    pipeline.fit(X_tr, y_tr)
+def eval_model(name, model, X_tr, y_tr, X_ev, y_ev):
+    model.fit(X_tr, y_tr)
 
-    train_pred = pipeline.predict(X_tr)
-    val_pred = pipeline.predict(X_ev)
+    pred_tr = model.predict(X_tr)
+    pred_ev = model.predict(X_ev)
 
     return {
-        "model": name,
-
-        "train_mae": mean_absolute_error(y_tr, train_pred),
-        "train_rmse": np.sqrt(mean_squared_error(y_tr, train_pred)),
-        "train_r2": r2_score(y_tr, train_pred),
-
-        "val_mae": mean_absolute_error(y_ev, val_pred),
-        "val_rmse": np.sqrt(mean_squared_error(y_ev, val_pred)),
-        "val_r2": r2_score(y_ev, val_pred),
-
-        "pipeline": pipeline
+        "name": name,
+        "train_rmse": np.sqrt(mean_squared_error(y_tr, pred_tr)),
+        "val_rmse": np.sqrt(mean_squared_error(y_ev, pred_ev)),
+        "val_mse": mean_squared_error(y_ev, pred_ev),
+        "train_r2": r2_score(y_tr, pred_tr),
+        "val_r2": r2_score(y_ev, pred_ev),
+        "model": model
     }
 
 
 # -------------------------
-# RANDOM FOREST (REGULARIZED)
+# MODELS
 # -------------------------
 
 rf_pipeline = Pipeline([
@@ -50,11 +46,6 @@ rf_pipeline = Pipeline([
     ))
 ])
 
-
-# -------------------------
-# HIST GRADIENT BOOSTING (BEST PRACTICE MODEL)
-# -------------------------
-
 hgb_pipeline = Pipeline([
     ("preprocessor", preprocessor),
     ("model", HistGradientBoostingRegressor(
@@ -68,66 +59,59 @@ hgb_pipeline = Pipeline([
 
 
 # -------------------------
-# TRAIN MODELS
+# TRAIN + VALIDATE
 # -------------------------
 
-rf_results = eval_pipeline(
-    "RandomForest",
-    rf_pipeline,
-    X_train, y_train,
-    X_val, y_val
-)
-
-hgb_results = eval_pipeline(
-    "HistGradientBoosting",
-    hgb_pipeline,
-    X_train, y_train,
-    X_val, y_val
-)
+rf_res = eval_model("RandomForest", rf_pipeline, X_train, y_train, X_val, y_val)
+hgb_res = eval_model("HistGradientBoosting", hgb_pipeline, X_train, y_train, X_val, y_val)
 
 
 # -------------------------
-# COMPARE MODELS
+# SELECT BEST MODEL (VAL SET ONLY)
 # -------------------------
 
-all_results = [rf_results, hgb_results]
+results = [rf_res, hgb_res]
 
-print(f'{"Model":<25} {"Train RMSE":>12} {"Val RMSE":>12} {"Gap":>12} {"Train R2":>10} {"Val R2":>10}')
-print("-" * 85)
+best = min(results, key=lambda x: x["val_rmse"])
 
-best_score = float("inf")
-best_model = None
-best_pipeline = None
+best_model = best["model"]
 
-for r in all_results:
-    gap = r["val_rmse"] - r["train_rmse"]
+print("\nMODEL COMPARISON")
+print("-" * 60)
 
-    print(f'{r["model"]:<25} '
-          f'{r["train_rmse"]:>12,.0f} '
-          f'{r["val_rmse"]:>12,.0f} '
-          f'{gap:>+12,.0f} '
-          f'{r["train_r2"]:>10.3f} '
-          f'{r["val_r2"]:>10.3f}')
+for r in results:
+    print(f"{r['name']:<22} "
+          f"Train RMSE: {r['train_rmse']:.0f} | "
+          f"Val RMSE: {r['val_rmse']:.0f} | "
+          f"Val MSE: {r['val_mse']:.0f} | "
+          f"Val R2: {r['val_r2']:.3f}")
 
-    if r["val_rmse"] < best_score:
-        best_score = r["val_rmse"]
-        best_model = r["model"]
-        best_pipeline = r["pipeline"]
+print("\n🏆 BEST MODEL:", best["name"])
 
 
 # -------------------------
-# FINAL RESULT
+# FINAL TEST EVALUATION (IMPORTANT)
 # -------------------------
 
-print("\n" + "-" * 85)
-print(f"🏆 BEST MODEL: {best_model}")
-print(f"📉 BEST VAL RMSE: {best_score:,.0f}")
+best_model.fit(X_train, y_train)
+
+test_pred = best_model.predict(X_test)
+
+test_rmse = np.sqrt(mean_squared_error(y_test, test_pred))
+test_mse = mean_squared_error(y_test, test_pred)
+test_r2 = r2_score(y_test, test_pred)
+
+print("\nFINAL TEST RESULTS")
+print("-" * 60)
+print(f"Test RMSE: {test_rmse:.0f}")
+print(f"Test MSE: {test_mse:.0f}")
+print(f"Test R2:   {test_r2:.3f}")
 
 
 # -------------------------
 # SAVE MODEL
 # -------------------------
 
-joblib.dump(best_pipeline, "ml/best_model.pkl")
+joblib.dump(best_model, "ml/best_model.pkl")
 
-print("\n✅ Model saved to ml/best_model.pkl")
+print("\n✅ Saved best model to ml/best_model.pkl")
