@@ -1,18 +1,28 @@
-
 services:
-
   api:
-    build: .
-    container_name: realestate_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: realestate-api
     ports:
       - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    restart: always
 
   ui:
     build:
       context: .
       dockerfile: streamlit_app/Dockerfile
-    container_name: realestate_ui
+    container_name: realestate-ui
     ports:
       - "8501:8501"
     depends_on:
       - api
+    environment:
+      - API_URL=http://api:8000
+    volumes:
+      - .:/app
+    restart: always
