@@ -2,23 +2,31 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
+# Force rebuild - updated scikit-learn version
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy requirements first
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Verify scikit-learn version
+RUN python -c "import sklearn; print(f'scikit-learn version: {sklearn.__version__}')"
+
+# Copy application code
 COPY . .
+
+# Create directories and copy model
 RUN mkdir -p ml data
+COPY ml/best_model.pkl /app/ml/
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-EXPOSE 8080
+EXPOSE 8000
 
-# Try port 8080 (Railway's common internal port)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
