@@ -7,13 +7,13 @@ services:
       dockerfile: Dockerfile
     container_name: realestate-api
     ports:
-      - "${API_PORT:-8000}:8000"
-    env_file:
-      - .env
+      - "8000:8000"
     environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
       - PYTHONPATH=/app
     volumes:
-      - ./ml:/app/ml  # Mount model directory for persistence
+      - ./ml:/app/ml
+      - ./data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
@@ -28,12 +28,10 @@ services:
       dockerfile: streamlit_app/Dockerfile
     container_name: realestate-ui
     ports:
-      - "${UI_PORT:-8501}:8501"
+      - "8501:8501"
     depends_on:
       api:
         condition: service_healthy
     environment:
       - API_URL=http://api:8000
-    volumes:
-      - ./streamlit_app:/app/streamlit_app
     restart: unless-stopped

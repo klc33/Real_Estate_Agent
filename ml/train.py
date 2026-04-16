@@ -44,13 +44,12 @@ def load_data(filepath: str = "data/raw.csv") -> tuple:
     X = df[available_features]
     y = df[TARGET]
     
-    # Log-transform target for better normality (common for house prices)
-    y_log = np.log1p(y)
-    logger.info(f"Target log-transformed. Original range: ${y.min():,.0f} - ${y.max():,.0f}")
+    # NO LOG TRANSFORM - Keep prices in original dollars
+    logger.info(f"Target range: ${y.min():,.0f} - ${y.max():,.0f}")
     
     # Split: 60% train, 20% validation, 20% test
     X_train, X_temp, y_train, y_temp = train_test_split(
-        X, y_log, test_size=0.4, random_state=42
+        X, y, test_size=0.4, random_state=42
     )
     
     X_val, X_test, y_val, y_test = train_test_split(
@@ -64,7 +63,7 @@ def load_data(filepath: str = "data/raw.csv") -> tuple:
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 
-# Load the data (this runs when module is imported)
+# Load the data
 try:
     X_train, X_val, X_test, y_train, y_val, y_test = load_data()
 except FileNotFoundError:

@@ -1,7 +1,7 @@
 import os
 import requests
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,11 +16,12 @@ DEFAULT_MODEL = "llama-3.1-8b-instant"
 def call_llm(messages: List[Dict[str, str]], 
              model: str = DEFAULT_MODEL,
              temperature: float = 0.0,
-             max_tokens: int = 1000) -> str:
+             max_tokens: int = 500) -> str:
     """
     Call the Groq LLM API with error handling and retries.
     """
     if not API_KEY:
+        logger.error("GROQ_API_KEY environment variable not set")
         raise ValueError("GROQ_API_KEY environment variable not set")
     
     headers = {
@@ -35,19 +36,34 @@ def call_llm(messages: List[Dict[str, str]],
         "max_tokens": max_tokens
     }
     
+    logger.info(f"Calling Groq API with model: {model}")
+    
     try:
-        logger.debug(f"Calling LLM with {len(messages)} messages")
         response = requests.post(
             BASE_URL,
             headers=headers,
             json=payload,
             timeout=30
         )
+        
+        # Log response status
+        logger.info(f"Groq API response status: {response.status_code}")
+        
+        if response.status_code != 200:
+            logger.error(f"Groq API error: {response.text}")
+            raise Exception(f"Groq API error: {response.status_code}")
+        
         response.raise_for_status()
         
         data = response.json()
+        
+        # Check if we got a valid response
+        if "choices" not in data or len(data["choices"]) == 0:
+            logger.error(f"Invalid response structure: {data}")
+            raise Exception("No choices in API response")
+        
         content = data["choices"][0]["message"]["content"]
-        logger.debug(f"LLM response received: {len(content)} chars")
+        logger.debug(f"LLM response: {content[:200]}...")
         
         return content
         

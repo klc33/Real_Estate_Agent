@@ -1,0 +1,27 @@
+{
+  "median_price": 164945.0,
+  "mean_price": 179921.78652968036,
+  "price_std": 75389.3939397168,
+  "price_range": [
+    34900.0,
+    625000.0
+  ],
+  "sample_count": 876,
+  "best_model": "HistGradientBoosting",
+  "test_rmse": 27553.285709157724,
+  "test_r2": 0.8447664440000826,
+  "training_date": "2026-04-17T00:35:02.018512",
+  "features_used": [
+    "LotFrontage",
+    "LotArea",
+    "OverallQual",
+    "YearBuilt",
+    "Street",
+    "GrLivArea",
+    "FullBath",
+    "BedroomAbvGr",
+    "GarageCars",
+    "Neighborhood",
+    "HouseStyle"
+  ]
+}

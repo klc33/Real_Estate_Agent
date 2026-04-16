@@ -23,31 +23,24 @@ logger = logging.getLogger(__name__)
 def evaluate_model(name: str, model: Pipeline, X_tr, y_tr, X_ev, y_ev) -> dict:
     """
     Train and evaluate a model.
-    
     Returns dictionary with metrics and trained model.
     """
     logger.info(f"Training {name}...")
     model.fit(X_tr, y_tr)
     
-    # Make predictions (in log space)
-    pred_tr_log = model.predict(X_tr)
-    pred_ev_log = model.predict(X_ev)
-    
-    # Convert back to original dollar space
-    pred_tr = np.expm1(pred_tr_log)
-    pred_ev = np.expm1(pred_ev_log)
-    y_tr_orig = np.expm1(y_tr)
-    y_ev_orig = np.expm1(y_ev)
+    # Make predictions (in original dollar space)
+    pred_tr = model.predict(X_tr)
+    pred_ev = model.predict(X_ev)
     
     # Calculate metrics
     results = {
         "name": name,
-        "train_rmse": np.sqrt(mean_squared_error(y_tr_orig, pred_tr)),
-        "val_rmse": np.sqrt(mean_squared_error(y_ev_orig, pred_ev)),
-        "train_mae": mean_absolute_error(y_tr_orig, pred_tr),
-        "val_mae": mean_absolute_error(y_ev_orig, pred_ev),
-        "train_r2": r2_score(y_tr_orig, pred_tr),
-        "val_r2": r2_score(y_ev_orig, pred_ev),
+        "train_rmse": np.sqrt(mean_squared_error(y_tr, pred_tr)),
+        "val_rmse": np.sqrt(mean_squared_error(y_ev, pred_ev)),
+        "train_mae": mean_absolute_error(y_tr, pred_tr),
+        "val_mae": mean_absolute_error(y_ev, pred_ev),
+        "train_r2": r2_score(y_tr, pred_tr),
+        "val_r2": r2_score(y_ev, pred_ev),
         "model": model
     }
     
@@ -134,13 +127,11 @@ def main():
     logger.info("\nEvaluating best model on test set...")
     
     best_model.fit(X_train, y_train)
-    test_pred_log = best_model.predict(X_test)
-    test_pred = np.expm1(test_pred_log)
-    y_test_orig = np.expm1(y_test)
+    test_pred = best_model.predict(X_test)
     
-    test_rmse = np.sqrt(mean_squared_error(y_test_orig, test_pred))
-    test_mae = mean_absolute_error(y_test_orig, test_pred)
-    test_r2 = r2_score(y_test_orig, test_pred)
+    test_rmse = np.sqrt(mean_squared_error(y_test, test_pred))
+    test_mae = mean_absolute_error(y_test, test_pred)
+    test_r2 = r2_score(y_test, test_pred)
     
     print("\n" + "=" * 80)
     print("FINAL TEST RESULTS")
@@ -151,13 +142,12 @@ def main():
     print("=" * 80)
     
     # Save training statistics
-    y_train_orig = np.expm1(y_train)
     train_stats = {
-        "median_price": float(y_train_orig.median()),
-        "mean_price": float(y_train_orig.mean()),
-        "price_std": float(y_train_orig.std()),
-        "price_range": [float(y_train_orig.min()), float(y_train_orig.max())],
-        "sample_count": len(y_train_orig),
+        "median_price": float(y_train.median()),
+        "mean_price": float(y_train.mean()),
+        "price_std": float(y_train.std()),
+        "price_range": [float(y_train.min()), float(y_train.max())],
+        "sample_count": len(y_train),
         "best_model": best["name"],
         "test_rmse": float(test_rmse),
         "test_r2": float(test_r2),
