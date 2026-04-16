@@ -20,16 +20,19 @@ COPY . .
 # Create necessary directories if they don't exist
 RUN mkdir -p ml data
 
+# Create startup script
+RUN echo '#!/bin/sh\n\
+PORT=${PORT:-8000}\n\
+echo "Starting server on port $PORT"\n\
+exec uvicorn app.main:app --host 0.0.0.0 --port $PORT' > /start.sh && \
+    chmod +x /start.sh
+
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Expose port (Railway uses PORT env variable)
+# Expose port
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
-
-# Run the application - Railway sets PORT env var
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run startup script
+CMD ["/start.sh"]
