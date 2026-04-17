@@ -10,7 +10,7 @@
   "best_model": "HistGradientBoosting",
   "test_rmse": 27553.285709157724,
   "test_r2": 0.8447664440000826,
-  "training_date": "2026-04-17T00:35:02.018512",
+  "training_date": "2026-04-17T00:46:30.684102",
   "features_used": [
     "LotFrontage",
     "LotArea",
