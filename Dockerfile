@@ -1,8 +1,8 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Force rebuild - updated scikit-learn version
+# Force rebuild - updated Python version
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -14,15 +14,13 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Verify scikit-learn version
-RUN python -c "import sklearn; print(f'scikit-learn version: {sklearn.__version__}')"
-
 # Copy application code
 COPY . .
 
 # Create directories and copy model
 RUN mkdir -p ml data
 COPY ml/best_model.pkl /app/ml/
+COPY ml/training_stats.json /app/ml/
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1

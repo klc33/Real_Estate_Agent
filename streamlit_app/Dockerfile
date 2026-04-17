@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -17,12 +17,12 @@ COPY . .
 
 # Set environment variables
 ENV PYTHONPATH=/app
-ENV API_URL=http://localhost:8000
 
-# Create startup script that respects Railway's PORT
+# Create startup script
 RUN echo '#!/bin/bash\n\
 PORT=${PORT:-8501}\n\
 echo "Starting Streamlit on port $PORT"\n\
+echo "API_URL is set to: $API_URL"\n\
 exec streamlit run streamlit_app/app.py --server.port $PORT --server.address 0.0.0.0 --server.enableCORS=false --server.enableXsrfProtection=false' > /start.sh && \
     chmod +x /start.sh
 
