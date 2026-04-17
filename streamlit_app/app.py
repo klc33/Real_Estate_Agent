@@ -375,6 +375,12 @@ st.markdown("""
     .stSpinner {
         color: black;
     }
+        /* Fix sidebar About text color */
+    [data-testid="stSidebar"] .stMarkdown p,
+    [data-testid="stSidebar"] .stMarkdown li,
+    [data-testid="stSidebar"] .stMarkdown {
+        color: #1f2937 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
