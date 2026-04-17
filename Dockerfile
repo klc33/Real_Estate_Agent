@@ -15,14 +15,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application code (including ml directory)
 COPY . .
-
-# Create directories
-RUN mkdir -p ml data
-
-# Copy model files if they exist (use wildcard to avoid errors)
-COPY ml/best_model.pkl ml/training_stats.json /app/ml/ 2>/dev/null || :
 
 # Create supervisor config
 RUN echo '[supervisord]\n\
@@ -55,7 +49,7 @@ environment=API_URL="http://localhost:8000",PYTHONPATH="/app"\n' > /etc/supervis
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Expose both ports
+# Expose ports
 EXPOSE 8000 8501
 
 # Run supervisord
