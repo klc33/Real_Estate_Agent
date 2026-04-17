@@ -18,10 +18,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create directories and copy model
+# Create directories
 RUN mkdir -p ml data
-COPY ml/best_model.pkl /app/ml/ 2>/dev/null || true
-COPY ml/training_stats.json /app/ml/ 2>/dev/null || true
+
+# Copy model files if they exist (use wildcard to avoid errors)
+COPY ml/best_model.pkl ml/training_stats.json /app/ml/ 2>/dev/null || :
 
 # Create supervisor config
 RUN echo '[supervisord]\n\
