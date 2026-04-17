@@ -381,6 +381,12 @@ st.markdown("""
     [data-testid="stSidebar"] .stMarkdown {
         color: #1f2937 !important;
     }
+        /* Ensure all markdown text in main area is dark */
+    .stMarkdown,
+    .stMarkdown p,
+    .stMarkdown li {
+        color: #1f2937 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
